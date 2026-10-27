@@ -1,0 +1,26 @@
+
+#display{
+	display:flex;
+	
+}
+
+
+#achievement-area{
+	display:flex;
+	flex-direction:column;
+	box-sizing:border-box;
+	border-style:solid;
+	width:300px;
+	max-width:300px;
+	gap:1em;
+	padding:1em;
+
+}
+
+.achievement{
+	font-family:sans-serif;
+	font-size:18px;
+	background-color:rgba(0,0,0);
+	width:100%;
+	
+}
