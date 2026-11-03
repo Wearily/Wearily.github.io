@@ -107,6 +107,19 @@ class ParticleEngine {
 			}
 		}
 		
+		if (event.name == "toast shown"){
+			// ring of fireworks around the toast
+			let cx = event.x + event.w / 2
+			let cy = event.y + event.h / 2
+			let bursts = 10
+			for (let i = 0; i < bursts; i++){
+				let angle = (i / bursts) * Math.PI * 2
+				this.createFirework(cx + Math.cos(angle) * (event.w / 2 + 30),
+									cy + Math.sin(angle) * (event.h / 2 + 30),
+									25)
+			}
+		}
+
 		if (event.name == "move"){
 			if (event.moveHistory.at(-1) == "up") {
 				this.createDust(event.playerX, event.playerY+20, 5, 2, 270, 5 ,10 )		

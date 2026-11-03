@@ -65,7 +65,11 @@ class AchievementSystem{
 							this.achievements["stay hydrated"] = true
 							document.getElementById("stay hydrated").style.backgroundColor = "#ffffff"
 							console.log("Way to stay hydrated!")
-					
+						this.broadcast({
+							name: "achievement complete",
+							achievementName : "Stay Hydrated"
+						})
+
 				}
 				else if (haveSameElements( UI.idToTypeList(event.tileHistory.slice(-6)),
 															["sand","sand","sand","water","water","water"]) &&
@@ -73,6 +77,10 @@ class AchievementSystem{
 							this.achievements["oasis"] = true
 							document.getElementById("oasis").style.backgroundColor = "#ffffff"
 							console.log("What a nice stay it has been!")
+						this.broadcast({
+							name: "achievement complete",
+							achievementName : "Oasis"
+						})
 				}
 					
 				else if (haveSameElements( UI.idToTypeList(event.tileHistory.slice(-5)),
@@ -82,6 +90,10 @@ class AchievementSystem{
 							document.getElementById("looking for oil").style.backgroundColor = "#ffffff"
 
 							console.log("$$$$$$$ OIL $$$$$$$$")
+						this.broadcast({
+							name: "achievement complete",
+							achievementName : "Looking For Oil"
+						})
 				}
 				else if (haveSameElements( event.moveHistory.slice(-4),
 															["up","right","down", "left"]) &&
@@ -90,6 +102,10 @@ class AchievementSystem{
 					    document.getElementById("dizzy").style.backgroundColor = "#ffffff"
 
 							console.log("Woaahhhah... 🤮!")
+						this.broadcast({
+							name: "achievement complete",
+							achievementName : "Dizzy"
+						})
 					
 				}
 			}
