@@ -10,6 +10,12 @@ var audioEngine = new MyAudioEngine()
 var achievementSys = new AchievementSystem()
 var particleEngine = new ParticleEngine(20000)
 var player = new Player()
+var terrain = new Terrain()
+var birdCam = new BirdCamera() // not "camera", that's a p5 function
+
+// where the mouse went down, used to tell a click from a camera drag
+var pressX = 0
+var pressY = 0
 
 player.addSub(audioEngine)
 player.addSub(achievementSys)
@@ -30,9 +36,12 @@ function preload(){
 
 // runs once by p5 engine upon loading
 function setup() {
-	createCanvas(UI.canvasWidth, UI.canvasHeight, document.getElementById("myCanvas"));
+	createCanvas(UI.canvasWidth, UI.canvasHeight, WEBGL, document.getElementById("myCanvas"));
 	outputVolume(0.3, 0.1);
 	frameRate(60);
+
+	terrain.generate()
+	birdCam.setup(player.x, player.y, terrain.heightAt(player.x, player.y))
 
 	// move later
 	const achievementArea = document.getElementById("achievement-area")
@@ -47,40 +56,53 @@ function setup() {
 
 // continiously called by the p5 engine
 function draw() {
-	background(220);
-
-	// draw the tiles
-	for (let y = 0; y < UI.tileDivisor; y++) {
-		for (let x = 0; x < UI.tileDivisor; x++) {
-			let c;
-			if (UI.tiles[y][x] == 0) {
-				c = color(0, 200, 0);
-			} else if (UI.tiles[y][x] == 1) {
-				c = color(194, 178, 128);
-			} else {
-				c = color(9, 195, 219);
-			}
-			fill(c);
-			rect(x * UI.tileWidth, y * UI.tileHeight, UI.tileWidth, UI.tileHeight);
-		}
-	}
-
-	// write code to render a seperate section to render all the achievements the player has collected 
-
-
-	fill(255, 0, 0);
+	background(170, 210, 235); // sky
 	noStroke();
-	ellipse(player.x, player.y, player.size, player.size);
-	player.move()
 
-	//particles 
-	
+	// move first so the camera doesn't lag a frame behind
+	player.move()
+	let groundZ = terrain.heightAt(player.x, player.y)
+	birdCam.update(player.x, player.y, groundZ)
+
+	// draw the terrain
+	ambientLight(120);
+	directionalLight(255, 250, 235, 0.4, 0.5, -1);
+	terrain.render()
+
+	// write code to render a seperate section to render all the achievements the player has collected
+
+
+	// player sits on top of the terrain
+	push();
+	translate(player.x, player.y, groundZ + player.size / 2);
+	fill(255, 0, 0);
+	sphere(player.size / 2, 6, 4);
+	pop();
+
+	//particles
+
+	// dust lives in the world, lift it onto the terrain
 	for (let id of particleEngine.active){
-		if (particleEngine.particles[id].lifetime > 0){
-			particleEngine.particles[id].render()
-			particleEngine.particles[id].update()
+		let part = particleEngine.particles[id]
+		if (part.lifetime > 0 && !part.isFirework){
+			push()
+			translate(0, 0, terrain.heightAt(part.x, part.y) + 2)
+			part.render()
+			pop()
+			part.update()
 		}
 	}
+
+	// fireworks are drawn on top of everything in screen coords
+	birdCam.beginHUD()
+	for (let id of particleEngine.active){
+		let part = particleEngine.particles[id]
+		if (part.lifetime > 0 && part.isFirework){
+			part.render()
+			part.update()
+		}
+	}
+	birdCam.endHUD()
 
 	particleEngine.cleanUp()
 
@@ -90,8 +112,15 @@ function draw() {
 function keyPressed() {
 }
 
+function mousePressed() {
+	pressX = mouseX
+	pressY = mouseY
+}
+
 function mouseClicked() {
 	// Code to run. "mouseX" for mouse x coordinate, "mouseY"
+	// ignore clicks that were really camera drags
+	if (dist(mouseX, mouseY, pressX, pressY) > 4) {return}
 	console.log("clicked!")
  	particleEngine.createFirework()
 }
