@@ -32,11 +32,30 @@ class Toaster {
 
 	update(event){
 		if (event.name == "achievement complete"){
-			this.queue.push(event)
-			if (!this.showing) {
-				this.showNext()
-			}
+			this.queue.push({ title: "Achievement Unlocked!", text: event.achievementName })
 		}
+		else if (event.name == "all achievements complete"){
+			this.queue.push({
+				title: "All Achievements Complete!",
+				text: "Time: " + Toaster.formatTime(event.totalTime),
+				style: "toast-final"
+			})
+		}
+		else {
+			return
+		}
+
+		if (!this.showing) {
+			this.showNext()
+		}
+	}
+
+	static formatTime(ms){
+		// 754000 -> "12m 34s"
+		let totalSeconds = Math.floor(ms / 1000)
+		let minutes = Math.floor(totalSeconds / 60)
+		let seconds = String(totalSeconds % 60).padStart(2, "0")
+		return minutes + "m " + seconds + "s"
 	}
 
 	showNext(){
@@ -45,19 +64,22 @@ class Toaster {
 			return
 		}
 		this.showing = true
-		let event = this.queue.shift()
+		let entry = this.queue.shift()
 
 		let toast = document.createElement("div")
 		toast.classList.add("toast")
-		toast.innerHTML = `<div class="toast-title">Achievement Unlocked!</div>
-							<div class="toast-name">${event.achievementName}</div>`
+		if (entry.style) {
+			toast.classList.add(entry.style)
+		}
+		toast.innerHTML = `<div class="toast-title">${entry.title}</div>
+							<div class="toast-name">${entry.text}</div>`
 		this.area.appendChild(toast)
 
 		// let the slide in finish so we broadcast where the toast actually ended up
 		toast.addEventListener("transitionend", () => {
 			this.broadcast({
 				name: "toast shown",
-				achievementName: event.achievementName,
+				achievementName: entry.text,
 				...this.getCanvasRect(toast)
 			})
 		}, { once: true })

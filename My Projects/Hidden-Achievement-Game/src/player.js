@@ -14,6 +14,14 @@ class Player {
 		// this.world = ui
 	}
 
+	spawn(x, y){
+		// place the player and reset the tile they start on
+		this.x = x
+		this.y = y
+		this.tile = UI.getTileID(x, y)
+		this.tileHistory = [this.tile]
+	}
+
 	addSub(object){
 		this.subs.push(object)
 	}
@@ -33,42 +41,50 @@ class Player {
 
 	}
 
-	move(){
+	move(facing = -HALF_PI){
+		/***
+		 * facing: the angle the camera looks along the ground (radians)
+		 * W walks that way, S walks back, A / D strafe
+		 * the default (-HALF_PI) is north, same as the old fixed controls
+		 */
+		let forwardX = Math.cos(facing)
+		let forwardY = Math.sin(facing)
+		let rightX = -forwardY
+		let rightY = forwardX
+		let dx = 0
+		let dy = 0
 
 		// handle player movement
 		if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
 			this.moveHistory.push("left")
-			
-			if (this.x >= 0) {
-				this.x -= this.speed;
-			}
+			dx -= rightX
+			dy -= rightY
 		}
-		
+
 		if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
 			this.moveHistory.push("right")
-
-			if (this.x <= UI.canvasWidth) {
-				this.x += this.speed;
-			}
+			dx += rightX
+			dy += rightY
 		}
-		
+
 		if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
 			this.moveHistory.push("up")
-
-			if (this.y - this.speed > 0) {
-				this.y -= this.speed;
-			}
-
+			dx += forwardX
+			dy += forwardY
 		}
-		
+
 		if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
 			this.moveHistory.push("down")
-
-			if (this.y+this.speed < UI.canvasHeight) {
-				this.y += this.speed;
-			}
-
+			dx -= forwardX
+			dy -= forwardY
 		}
+
+		// same speed in every direction (diagonals included), and stay inside the world
+		let length = Math.hypot(dx, dy)
+		let moveX = length > 0 ? dx / length : 0
+		let moveY = length > 0 ? dy / length : 0
+		this.x = constrain(this.x + moveX * this.speed, 0, UI.worldWidth - 1)
+		this.y = constrain(this.y + moveY * this.speed, 0, UI.worldHeight - 1)
 
 		
 		// if any movement key is pressed
@@ -88,6 +104,8 @@ class Player {
 				"moveHistory":this.moveHistory,
 				"playerX": this.x,
 				"playerY": this.y,
+				"moveX": moveX, // direction actually walked (unit vector, 0 if keys cancel out)
+				"moveY": moveY,
 				"size":this.size
 			})
 		 }

@@ -68,3 +68,15 @@
 	font-size:24px;
 	font-weight:bold;
 }
+
+/* final "all achievements" toast */
+.toast.toast-final{
+	background-color:rgba(60, 45, 0, 0.92);
+	border-width:3px;
+	padding:1em 2em;
+}
+
+.toast.toast-final .toast-name{
+	color:gold;
+	font-size:28px;
+}

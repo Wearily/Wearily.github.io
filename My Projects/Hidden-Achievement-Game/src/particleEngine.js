@@ -120,19 +120,13 @@ class ParticleEngine {
 			}
 		}
 
-		if (event.name == "move"){
-			if (event.moveHistory.at(-1) == "up") {
-				this.createDust(event.playerX, event.playerY+20, 5, 2, 270, 5 ,10 )		
-			}
-			else if (event.moveHistory.at(-1) == "down") {
-				this.createDust(event.playerX, event.playerY-20, 5,  2,  90, 5,10  )		
-			}
-			else if (event.moveHistory.at(-1) == "left") {
-				this.createDust(event.playerX, event.playerY+20, 5,  2,  0, 5,10  )		
-			}
-			else if (event.moveHistory.at(-1) == "right") {
-				this.createDust(event.playerX, event.playerY+20, 5, 2, 180, 5, 10  )		
-			}
+		if (event.name == "move" && (event.moveX != 0 || event.moveY != 0)){
+			// movement follows the camera now, so kick dust out behind the actual walking direction
+			// (createDust angles are in degrees with y flipped, 270 = straight down the screen)
+			let angle = Math.atan2(event.moveY, -event.moveX) * 180 / Math.PI
+			this.createDust(event.playerX - event.moveX * 20,
+							event.playerY - event.moveY * 20,
+							5, 2, angle, 5, 10)
 		}
 
 	}

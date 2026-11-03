@@ -15,11 +15,14 @@ class Terrain {
 		2: { base: 0,  rough: 0,  color: [9, 195, 219] },   // water
 	}
 
+	static waterVariation = 0.05
+
 	constructor(){
-		this.cols = 40
-		this.rows = 40
-		this.cellSize = UI.canvasWidth / this.cols // 8 cells per tile
+		this.cols = UI.tileDivisor * 4 // 4 cells per tile
+		this.rows = UI.tileDivisor * 4
+		this.cellSize = UI.worldWidth / this.cols
 		this.waterLevel = 0
+		this.mountain = 120 // extra height in the middle of the island
 		this.heights = [] // heights[row][col] on the regular (un-jittered) grid
 		this.geometry = null
 	}
@@ -43,6 +46,11 @@ class Terrain {
 
 				let biome = this.biomeAt(x, y)
 				let z = biome.base + biome.rough * (noise(x * 0.008, y * 0.008) - 0.5) * 2
+
+				// raise a mountain towards the middle of the island, fading out at the beaches
+				let d = dist(x, y, UI.worldWidth / 2, UI.worldHeight / 2) / (UI.worldWidth / 2)
+				z += this.mountain * Math.pow(max(0, 1 - d / 0.6), 2) * (biome.rough / Terrain.biomes[0].rough)
+
 				if (this.touchesWater(i, j)) {
 					z = this.waterLevel
 				}
@@ -59,8 +67,10 @@ class Terrain {
 
 		this.geometry = buildGeometry(() => {
 			noStroke()
-			beginShape(TRIANGLES)
+			// one shape per row, p5 copies each shape's arrays with a spread
+			// and one giant shape overflows the call stack
 			for (let j = 0; j < this.rows; j++) {
+				beginShape(TRIANGLES)
 				for (let i = 0; i < this.cols; i++) {
 					let a = points[j][i]
 					let b = points[j][i + 1]
@@ -76,8 +86,8 @@ class Terrain {
 						this.addFace(b, c, d)
 					}
 				}
+				endShape()
 			}
-			endShape()
 		})
 		this.geometry.computeNormals(FLAT)
 	}
@@ -86,7 +96,9 @@ class Terrain {
 		// one color per triangle, picked from the tile under its center
 		let type = this.tileTypeAt((a.x + b.x + c.x) / 3, (a.y + b.y + c.y) / 3)
 		let base = color(...Terrain.biomes[type].color)
-		fill(lerpColor(base, color(0), random(0, 0.12)))
+		// water gets less variation so it blends into the ocean plane at the world edge
+		let variation = (type == 2) ? Terrain.waterVariation : 0.12
+		fill(lerpColor(base, color(0), random(0, variation)))
 
 		vertex(a.x, a.y, a.z)
 		vertex(b.x, b.y, b.z)
@@ -153,9 +165,10 @@ class Terrain {
 	render(){
 		// ocean around the world so the edges don't float in the sky
 		push()
-		translate(UI.canvasWidth / 2, UI.canvasHeight / 2, this.waterLevel - 2)
-		fill(...Terrain.biomes[2].color)
-		plane(8000, 8000)
+		translate(UI.worldWidth / 2, UI.worldHeight / 2, this.waterLevel - 2)
+		// average shade of the water triangles so the world edge doesn't show
+		fill(lerpColor(color(...Terrain.biomes[2].color), color(0), Terrain.waterVariation / 2))
+		plane(UI.worldWidth * 6, UI.worldHeight * 6)
 		pop()
 
 		model(this.geometry)

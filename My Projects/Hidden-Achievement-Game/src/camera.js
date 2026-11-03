@@ -19,7 +19,7 @@ class BirdCamera {
 		this.minPitch = 15     // degrees above the ground
 		this.maxPitch = 85
 		this.minDist = 200
-		this.maxDist = 1500
+		this.maxDist = 2500
 		this.followSpeed = 0.08 // how fast the bird catches up to the player
 		this.panReturn = 0.95   // how much pan offset is kept each frame while moving
 		this.lastAzimuth = 0    // camera angle around the player last frame, set in setup()
@@ -39,7 +39,7 @@ class BirdCamera {
 	setup(px, py, pz){
 		this.hud = createCamera()
 		this.cam = createCamera() // created last so it's the active camera
-		this.cam.perspective(PI / 3, width / height, 5, 8000)
+		this.cam.perspective(PI / 3, width / height, 5, 15000)
 
 		this.focus = createVector(px, py, pz)
 		this.lastPlayer = createVector(px, py)
@@ -57,6 +57,11 @@ class BirdCamera {
 			cx, cy, cz,
 			0, 0, -1
 		)
+	}
+
+	facing(){
+		// direction the camera looks along the ground, the eye sits on the opposite side of the player
+		return this.lastAzimuth + PI
 	}
 
 	update(px, py, pz){

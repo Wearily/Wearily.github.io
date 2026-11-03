@@ -46,7 +46,9 @@ function setup() {
 	outputVolume(0.3, 0.1);
 	frameRate(60);
 
+	UI.generateIsland()
 	terrain.generate()
+	player.spawn(UI.worldWidth / 2, UI.worldHeight * 0.7) // south side of the island
 	birdCam.setup(player.x, player.y, terrain.heightAt(player.x, player.y))
 	toaster.setup()
 
@@ -67,7 +69,7 @@ function draw() {
 	noStroke();
 
 	// move first so the camera doesn't lag a frame behind
-	player.move()
+	player.move(birdCam.facing()) // W walks the way the camera is looking
 	let groundZ = terrain.heightAt(player.x, player.y)
 	birdCam.update(player.x, player.y, groundZ)
 

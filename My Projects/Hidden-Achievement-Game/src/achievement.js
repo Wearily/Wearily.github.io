@@ -31,6 +31,10 @@ class AchievementSystem{
 		this.keyHistory = []      // single key taps, newest last
 		this.fireworkTimes = []   // millis() of recent click fireworks
 		this.cameraTurn = 0       // signed camera rotation around the player (radians)
+		this.visitedLand = new Set() // visited tiles that aren't water
+		this.landCount = null     // number of island tiles, found on first use
+		this.firstUnlockTime = null // millis() when the first achievement was unlocked
+		this.allComplete = false
  	}
 
 	achievements = {
@@ -39,7 +43,7 @@ class AchievementSystem{
 		"looking for oil": false, // last 5 tiles are sand
 		"oasis": false, // 3 sand, then last 3 water
 		"dizzy":false,
-		"cartographer": false, // visit all 25 tiles
+		"cartographer": false, // visit every tile on the island
 		"four corners": false, // stand on all 4 corner tiles
 		"king of the hill": false, // stand on the highest point of the terrain
 		"edge of the world": false, // walk into the edge of the map
@@ -51,7 +55,6 @@ class AchievementSystem{
 		"pyromaniac": false // click 20 fireworks within 10 seconds
 	}
 
-	static corners = ["0,0", "4,0", "0,4", "4,4"]
 	static triathlon = ["grass", "sand", "water", "sand", "grass"]
 	static konami = ["up", "up", "down", "down", "left", "right", "left", "right"]
 
@@ -163,6 +166,27 @@ class AchievementSystem{
 					this.unlock("pyromaniac", "Pyromaniac", "🔥🔥🔥 Someone stop them 🔥🔥🔥")
 				}
 			}
+
+			this.trackProgress()
+	}
+
+	trackProgress(){
+		// start the clock on the first achievement, report the total time once they're all done
+		let unlocked = Object.values(this.achievements).filter(done => done).length
+
+		if (unlocked > 0 && this.firstUnlockTime === null){
+			this.firstUnlockTime = millis()
+		}
+
+		if (unlocked == Object.keys(this.achievements).length && !this.allComplete){
+			this.allComplete = true
+			let totalTime = millis() - this.firstUnlockTime
+			console.log("ALL ACHIEVEMENTS COMPLETE in", totalTime, "ms")
+			this.broadcast({
+				name: "all achievements complete",
+				totalTime: totalTime
+			})
+		}
 	}
 
 	checkExploring(event){
@@ -171,14 +195,23 @@ class AchievementSystem{
 
 		// the player can step a few pixels off the left / right edge, ignore those tile ids
 		if (tile[0] >= 0 && tile[0] <= last && tile[1] >= 0 && tile[1] <= last){
-			this.visited.add(tile[0] + "," + tile[1])
+			let id = tile[0] + "," + tile[1]
+			this.visited.add(id)
+			if (UI.tiles[tile[1]][tile[0]] != 2){
+				this.visitedLand.add(id)
+			}
 		}
 
-		if (this.visited.size == UI.tileDivisor * UI.tileDivisor){
+		// cartographer, every tile on the island (the ocean doesn't count)
+		if (this.landCount === null){
+			this.landCount = UI.tiles.flat().filter(type => type != 2).length
+		}
+		if (this.visitedLand.size == this.landCount){
 			this.unlock("cartographer", "Cartographer", "You've seen it all!")
 		}
 
-		if (AchievementSystem.corners.every(id => this.visited.has(id))){
+		let corners = ["0,0", last + ",0", "0," + last, last + "," + last]
+		if (corners.every(id => this.visited.has(id))){
 			this.unlock("four corners", "Four Corners", "Every corner of the world")
 		}
 
@@ -194,9 +227,9 @@ class AchievementSystem{
 			this.unlock("king of the hill", "King of the Hill", "On top of the world!")
 		}
 
-		// the player stops just before the top / bottom edge, and just past the left / right edge
-		if (event.playerX <= 0 || event.playerX >= UI.canvasWidth ||
-			event.playerY <= 10 || event.playerY >= UI.canvasHeight - 10){
+		// the player is kept between 0 and the world size - 1
+		if (event.playerX <= 0 || event.playerX >= UI.worldWidth - 1 ||
+			event.playerY <= 0 || event.playerY >= UI.worldHeight - 1){
 			this.unlock("edge of the world", "Edge of the World", "Here be dragons")
 		}
 
@@ -230,6 +263,7 @@ class AchievementSystem{
 			name: "achievement complete",
 			achievementName : achievementName
 		})
+		this.trackProgress() // statue unlocks from a timer, outside update()
 	}
 
 
