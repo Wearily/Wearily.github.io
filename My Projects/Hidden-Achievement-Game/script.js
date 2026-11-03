@@ -12,6 +12,7 @@ var particleEngine = new ParticleEngine(20000)
 var player = new Player()
 var terrain = new Terrain()
 var birdCam = new BirdCamera() // not "camera", that's a p5 function
+var toaster = new Toaster()
 
 // where the mouse went down, used to tell a click from a camera drag
 var pressX = 0
@@ -22,6 +23,9 @@ player.addSub(achievementSys)
 player.addSub(particleEngine)
 
 achievementSys.addSub(particleEngine)
+achievementSys.addSub(toaster)
+
+toaster.addSub(particleEngine)
 
 
 const sampleInt = setInterval(()=>{
@@ -42,6 +46,7 @@ function setup() {
 
 	terrain.generate()
 	birdCam.setup(player.x, player.y, terrain.heightAt(player.x, player.y))
+	toaster.setup()
 
 	// move later
 	const achievementArea = document.getElementById("achievement-area")
