@@ -18,6 +18,12 @@ function haveSameElements(arr1, arr2) {
 	return true;
 }
 
+function haveSameOrder(arr1, arr2) {
+	// same elements in the same order (haveSameElements ignores order)
+	if (arr1.length !== arr2.length) return false;
+	return arr1.every((val, i) => val === arr2[i]);
+}
+
 
 
 

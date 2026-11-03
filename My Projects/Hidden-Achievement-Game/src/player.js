@@ -96,6 +96,31 @@ class Player {
 
 	}
 
+	static keyDirections = {
+		37: "left", 65: "left",   // left arrow, A
+		39: "right", 68: "right", // right arrow, D
+		38: "up", 87: "up",       // up arrow, W
+		40: "down", 83: "down"    // down arrow, S
+	}
+
+	pressKey(code){
+		// moveHistory records every frame a key is held, so single taps get lost there
+		let direction = Player.keyDirections[code]
+		if (direction) {
+			this.broadcast({
+				'name': "key pressed",
+				"direction": direction
+			})
+		}
+	}
+
+	fireworkLaunched(){
+		this.broadcast({
+			'name': "firework launched",
+			"time": millis()
+		})
+	}
+
 	getCurrentTile() {
 		/*** 
 		 * this function returns the tile type ( aka number)

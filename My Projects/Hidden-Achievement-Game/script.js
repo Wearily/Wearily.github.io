@@ -27,6 +27,8 @@ achievementSys.addSub(toaster)
 
 toaster.addSub(particleEngine)
 
+birdCam.addSub(achievementSys)
+
 
 const sampleInt = setInterval(()=>{
 	console.log("active:",particleEngine.active.length)
@@ -115,6 +117,7 @@ function draw() {
 
 
 function keyPressed() {
+	player.pressKey(keyCode)
 }
 
 function mousePressed() {
@@ -128,4 +131,5 @@ function mouseClicked() {
 	if (dist(mouseX, mouseY, pressX, pressY) > 4) {return}
 	console.log("clicked!")
  	particleEngine.createFirework()
+	player.fireworkLaunched()
 }

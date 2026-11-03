@@ -10,6 +10,7 @@
 class BirdCamera {
 
 	constructor(){
+		this.subs = []
 		this.cam = null        // main 3D camera
 		this.hud = null        // default camera, z = 0 maps 1:1 to screen pixels
 		this.focus = null      // smoothed player position the camera glides after
@@ -21,6 +22,18 @@ class BirdCamera {
 		this.maxDist = 1500
 		this.followSpeed = 0.08 // how fast the bird catches up to the player
 		this.panReturn = 0.95   // how much pan offset is kept each frame while moving
+		this.lastAzimuth = 0    // camera angle around the player last frame, set in setup()
+	}
+
+	addSub(object){
+		this.subs.push(object)
+	}
+
+	broadcast(event){
+		// call the update function of all subs
+		for (let sub of this.subs){
+			sub.update(event)
+		}
 	}
 
 	setup(px, py, pz){
@@ -33,6 +46,7 @@ class BirdCamera {
 
 		// start south of the player looking north, same orientation as the old 2D map
 		this.placeEye(px, py, pz, radians(60), 600, HALF_PI)
+		this.lastAzimuth = HALF_PI
 	}
 
 	placeEye(cx, cy, cz, pitch, dist, azimuth){
@@ -67,6 +81,16 @@ class BirdCamera {
 		}
 
 		this.placeEye(c.centerX, c.centerY, c.centerZ, pitch, constrain(r, this.minDist, this.maxDist), azimuth)
+
+		// let subs know how far the camera turned around the player this frame
+		let turn = atan2(sin(azimuth - this.lastAzimuth), cos(azimuth - this.lastAzimuth))
+		this.lastAzimuth = azimuth
+		if (Math.abs(turn) > 0.0001) {
+			this.broadcast({
+				name: "camera moved",
+				turn: turn
+			})
+		}
 	}
 
 	follow(px, py, pz){
