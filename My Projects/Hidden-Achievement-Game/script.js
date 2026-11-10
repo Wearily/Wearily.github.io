@@ -13,6 +13,7 @@ var player = new Player()
 var terrain = new Terrain()
 var birdCam = new BirdCamera() // not "camera", that's a p5 function
 var toaster = new Toaster()
+var skin = new Skin()
 
 // where the mouse went down, used to tell a click from a camera drag
 var pressX = 0
@@ -24,6 +25,7 @@ player.addSub(particleEngine)
 
 achievementSys.addSub(particleEngine)
 achievementSys.addSub(toaster)
+achievementSys.addSub(skin)
 
 toaster.addSub(particleEngine)
 
@@ -61,6 +63,8 @@ function setup() {
 		achievement.classList.add("achievement")
 		achievementArea.appendChild(achievement)
 	}
+
+	skin.setup()
 }
 
 // continiously called by the p5 engine
@@ -127,9 +131,10 @@ function mousePressed() {
 	pressY = mouseY
 }
 
-function mouseClicked() {
+function mouseClicked(event) {
 	// Code to run. "mouseX" for mouse x coordinate, "mouseY"
-	// ignore clicks that were really camera drags
+	// ignore clicks on the page UI (theme buttons) and clicks that were really camera drags
+	if (event && event.target && event.target.id != "myCanvas") {return}
 	if (dist(mouseX, mouseY, pressX, pressY) > 4) {return}
 	console.log("clicked!")
  	particleEngine.createFirework()

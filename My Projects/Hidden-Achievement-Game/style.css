@@ -1,32 +1,450 @@
+/* ------------------------------------------------------------------
+   Hidden Achievement Game, the UI around the p5 canvas.
+   Four skins (garden, pixel, pop, clean) are swapped with body[data-theme],
+   everything themed reads from the custom properties below.
+------------------------------------------------------------------- */
+
+:root,
+body[data-theme="garden"]{
+	--font-display:"Young Serif", Georgia, serif;
+	--display-weight:400; /* Young Serif only ships one weight */
+	--font-body:"Nunito", system-ui, sans-serif;
+	--label-size:17px;
+	--title-size:34px;
+
+	--page-bg:radial-gradient(60rem 40rem at 8% -10%, #f6ecce 0, transparent 60%),
+	          radial-gradient(50rem 40rem at 100% 110%, #cfe0b8 0, transparent 60%),
+	          #e2ebd0;
+	--ink:#2b3a27;
+	--muted:#5d6e57;
+	--accent:#c4673a;
+	--accent-ink:#fff8ec;
+
+	--panel-bg:#f8f3e2;
+	--panel-ink:#2b3a27;
+	--panel-radius:34px 18px 34px 18px;
+	--panel-border:1px solid #cdd6b4;
+	--panel-shadow:0 18px 40px -18px rgba(60, 80, 40, 0.45);
+
+	--locked-bg:#e9e5cd;
+	--locked-ink:#56614a;
+	--done-bg:#4f7a33;
+	--done-ink:#fbf8ea;
+	--item-radius:999px;
+	--item-border:1px solid transparent;
+
+	--canvas-radius:26px;
+	--canvas-outline:0 solid transparent;
+	--canvas-shadow:0 22px 50px -20px rgba(50, 70, 35, 0.55);
+
+	--toast-bg:#f8f3e2;
+	--toast-ink:#2b3a27;
+	--toast-sub:#5d6e57;
+	--toast-accent:#c4673a;
+	--toast-radius:26px 14px 26px 14px;
+	--toast-border:2px solid #c4673a;
+	--toast-shadow:0 14px 30px -10px rgba(40, 55, 30, 0.5);
+	--toast-final-bg:#3f5b2e;
+	--toast-final-ink:#fbf8ea;
+	--toast-final-sub:#d9e6c2;
+	--toast-final-accent:#f2c45a;
+}
+
+body[data-theme="pixel"]{
+	--display-weight:700;
+	--font-display:"Press Start 2P", ui-monospace, monospace;
+	--font-body:"Press Start 2P", ui-monospace, monospace;
+	--label-size:11px;
+	--title-size:20px;
+
+	--page-bg:linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px) 0 0 / 24px 24px,
+	          linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px) 0 0 / 24px 24px,
+	          #1a1033;
+	--ink:#fff3d1;
+	--muted:#b9a8e6;
+	--accent:#ffd23f;
+	--accent-ink:#1a1033;
+
+	--panel-bg:#2a1a52;
+	--panel-ink:#fff3d1;
+	--panel-radius:0;
+	--panel-border:4px solid #fff3d1;
+	--panel-shadow:8px 8px 0 #0d0620;
+
+	--locked-bg:#1a1033;
+	--locked-ink:#a493d6;
+	--done-bg:#3ddc84;
+	--done-ink:#0d0620;
+	--item-radius:0;
+	--item-border:3px solid #fff3d1;
+
+	--canvas-radius:0;
+	--canvas-outline:4px solid #fff3d1;
+	--canvas-shadow:8px 8px 0 #0d0620;
+
+	--toast-bg:#2a1a52;
+	--toast-ink:#fff3d1;
+	--toast-sub:#b9a8e6;
+	--toast-accent:#ffd23f;
+	--toast-radius:0;
+	--toast-border:4px solid #ffd23f;
+	--toast-shadow:6px 6px 0 #0d0620;
+	--toast-final-bg:#ffd23f;
+	--toast-final-ink:#1a1033;
+	--toast-final-sub:#3b2a6b;
+	--toast-final-accent:#e8344f;
+}
+
+body[data-theme="pop"]{
+	--display-weight:700;
+	--font-display:"Lilita One", "Baloo 2", system-ui, sans-serif;
+	--font-body:"Baloo 2", system-ui, sans-serif;
+	--label-size:19px;
+	--title-size:40px;
+
+	--page-bg:radial-gradient(circle, rgba(255,255,255,0.16) 3px, transparent 4px) 0 0 / 38px 38px,
+	          #6a4cff;
+	--ink:#ffffff;
+	--muted:#e3dcff;
+	--accent:#ffd23f;
+	--accent-ink:#1b1240;
+
+	--panel-bg:#ffffff;
+	--panel-ink:#1b1240;
+	--panel-radius:28px;
+	--panel-border:0 solid transparent;
+	--panel-shadow:0 22px 40px -14px rgba(20, 8, 90, 0.7);
+
+	--locked-bg:#ece8ff;
+	--locked-ink:#5b4fa0;
+	--done-bg:#ff4f8b;
+	--done-ink:#1b1240;
+	--item-radius:18px;
+	--item-border:0 solid transparent;
+
+	--canvas-radius:28px;
+	--canvas-outline:6px solid #ffffff;
+	--canvas-shadow:0 22px 40px -14px rgba(20, 8, 90, 0.7);
+
+	--toast-bg:#ffffff;
+	--toast-ink:#1b1240;
+	--toast-sub:#5b4fa0;
+	--toast-accent:#ff4f8b;
+	--toast-radius:24px;
+	--toast-border:0 solid transparent;
+	--toast-shadow:0 18px 34px -10px rgba(20, 8, 90, 0.65);
+	--toast-final-bg:#ffd23f;
+	--toast-final-ink:#1b1240;
+	--toast-final-sub:#4a3a00;
+	--toast-final-accent:#ff4f8b;
+}
+
+body[data-theme="clean"]{
+	--display-weight:700;
+	--font-display:"DM Sans", system-ui, sans-serif;
+	--font-body:"DM Sans", system-ui, sans-serif;
+	--label-size:16px;
+	--title-size:28px;
+
+	--page-bg:#f3f2ee;
+	--ink:#1d1d1b;
+	--muted:#6b6a64;
+	--accent:#e0472e;
+	--accent-ink:#ffffff;
+
+	--panel-bg:#ffffff;
+	--panel-ink:#1d1d1b;
+	--panel-radius:16px;
+	--panel-border:1px solid #e3e1da;
+	--panel-shadow:0 1px 2px rgba(0, 0, 0, 0.06), 0 12px 28px -14px rgba(0, 0, 0, 0.2);
+
+	--locked-bg:#f3f2ee;
+	--locked-ink:#6f6d66;
+	--done-bg:#1d1d1b;
+	--done-ink:#ffffff;
+	--item-radius:10px;
+	--item-border:1px solid transparent;
+
+	--canvas-radius:16px;
+	--canvas-outline:1px solid #e3e1da;
+	--canvas-shadow:0 1px 2px rgba(0, 0, 0, 0.06), 0 20px 40px -20px rgba(0, 0, 0, 0.28);
+
+	--toast-bg:#ffffff;
+	--toast-ink:#1d1d1b;
+	--toast-sub:#6b6a64;
+	--toast-accent:#e0472e;
+	--toast-radius:14px;
+	--toast-border:1px solid #e3e1da;
+	--toast-shadow:0 2px 4px rgba(0, 0, 0, 0.08), 0 18px 36px -12px rgba(0, 0, 0, 0.35);
+	--toast-final-bg:#1d1d1b;
+	--toast-final-ink:#ffffff;
+	--toast-final-sub:#c9c7bf;
+	--toast-final-accent:#ff7a5f;
+}
+
+:root{
+	--check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+	--star:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.2l-5.9 3.4 1.3-6.6L2.5 9.4l6.6-.8z'/%3E%3C/svg%3E");
+}
+
+/* ---------- page ---------- */
+
+body{
+	margin:0;
+	min-height:100vh;
+	background:var(--page-bg);
+	color:var(--ink);
+	font-family:var(--font-body);
+}
+
+::selection{
+	background:var(--accent);
+	color:var(--accent-ink);
+}
+
+:focus-visible{
+	outline:3px solid var(--accent);
+	outline-offset:3px;
+}
+
+#shell{
+	width:fit-content;
+	max-width:100%;
+	margin:0 auto;
+	padding:28px 24px 40px;
+	box-sizing:border-box;
+}
+
+#topbar{
+	display:flex;
+	flex-wrap:wrap;
+	align-items:center;
+	justify-content:space-between;
+	gap:16px 32px;
+	margin-bottom:24px;
+}
+
+#topbar h1{
+	margin:0;
+	font-family:var(--font-display);
+	font-size:var(--title-size);
+	font-weight:var(--display-weight);
+	line-height:1.1;
+	letter-spacing:-0.01em;
+	text-wrap:balance;
+}
+
+#topbar-tools{
+	display:flex;
+	flex-wrap:wrap;
+	align-items:center;
+	gap:16px 28px;
+}
+
+#progress{
+	display:flex;
+	align-items:center;
+	gap:12px;
+	font-size:15px;
+	font-weight:700;
+}
+
+body[data-theme="pixel"] #progress{
+	font-size:10px;
+}
+
+#progress-count{
+	font-variant-numeric:tabular-nums;
+	white-space:nowrap;
+}
+
+#progress-bar{
+	display:block;
+	width:150px;
+	height:12px;
+	border-radius:var(--item-radius);
+	background:rgba(0, 0, 0, 0.22);
+	overflow:hidden;
+}
+
+#progress-fill{
+	display:block;
+	height:100%;
+	width:calc(var(--p, 0) * 100%);
+	background:var(--accent);
+	transition:width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#theme-switch{
+	display:flex;
+	gap:6px;
+	padding:5px;
+	border-radius:var(--panel-radius);
+	background:rgba(0, 0, 0, 0.16);
+}
+
+#theme-switch button{
+	appearance:none;
+	border:0;
+	cursor:pointer;
+	padding:0.5em 0.95em;
+	font:inherit;
+	font-size:14px;
+	font-weight:700;
+	color:var(--ink);
+	background:transparent;
+	border-radius:var(--item-radius);
+	transition:background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+body[data-theme="pixel"] #theme-switch button{
+	font-size:10px;
+}
+
+#theme-switch button:hover{
+	background:rgba(255, 255, 255, 0.18);
+}
+
+#theme-switch button:active{
+	transform:scale(0.96);
+}
+
+#theme-switch button[aria-pressed="true"]{
+	background:var(--accent);
+	color:var(--accent-ink);
+}
+
+/* ---------- canvas + panel ---------- */
 
 #display{
 	display:flex;
+	align-items:flex-start;
+	gap:28px;
 	position:relative;
-
 }
 
+#myCanvas{
+	display:block;
+	border-radius:var(--canvas-radius);
+	outline:var(--canvas-outline);
+	box-shadow:var(--canvas-shadow);
+}
 
 #achievement-area{
 	display:flex;
 	flex-direction:column;
 	box-sizing:border-box;
-	border-style:solid;
 	width:300px;
 	max-width:300px;
-	gap:1em;
-	padding:1em;
+	flex:none;
+	gap:10px;
+	padding:22px 18px 20px;
+	background:var(--panel-bg);
+	color:var(--panel-ink);
+	border:var(--panel-border);
+	border-radius:var(--panel-radius);
+	box-shadow:var(--panel-shadow);
+}
 
+#achievement-area h2{
+	margin:0;
+	font-family:var(--font-display);
+	font-size:calc(var(--title-size) * 0.7);
+	line-height:1.15;
+}
+
+#achievement-area .panel-hint{
+	margin:0 0 8px;
+	font-size:14px;
+	line-height:1.45;
+	color:var(--locked-ink);
+	text-wrap:pretty;
+}
+
+body[data-theme="pixel"] #achievement-area .panel-hint{
+	font-size:9px;
+	line-height:1.7;
 }
 
 .achievement{
-	font-family:sans-serif;
-	font-size:18px;
-	background-color:rgba(0,0,0);
+	position:relative;
+	box-sizing:border-box;
+	display:flex;
+	align-items:center;
 	width:100%;
-	
+	min-height:46px;
+	padding:0.55em 1em 0.55em 3.1em;
+	font-family:var(--font-body);
+	font-size:var(--label-size);
+	font-weight:700;
+	text-transform:capitalize;
+	line-height:1.2;
+	/* the name stays hidden until the achievement is earned */
+	color:transparent;
+	background-color:var(--locked-bg);
+	border:var(--item-border);
+	border-radius:var(--item-radius);
+	transition:background-color 0.4s ease;
 }
 
-/* achievement toasts, positioned over the canvas by Toaster.setup() */
+/* marker: hollow ring while locked, check once earned */
+.achievement::before{
+	content:"";
+	position:absolute;
+	left:0.85em;
+	top:50%;
+	width:1.35em;
+	height:1.35em;
+	translate:0 -50%;
+	box-sizing:border-box;
+	border:2px solid var(--locked-ink);
+	border-radius:var(--item-radius);
+}
+
+.achievement::after{
+	content:"? ? ?";
+	position:absolute;
+	left:3.1em;
+	top:50%;
+	translate:0 -50%;
+	letter-spacing:0.15em;
+	color:var(--locked-ink);
+}
+
+/* earned: achievement.js paints an inline background-color, that is the cue */
+.achievement[style*="background-color"]{
+	background-color:var(--done-bg) !important;
+	color:var(--done-ink);
+	animation:earned 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.achievement[style*="background-color"]::before{
+	border:0;
+	background-color:currentColor;
+	-webkit-mask:var(--check) center / contain no-repeat;
+	mask:var(--check) center / contain no-repeat;
+	width:1.5em;
+	height:1.5em;
+}
+
+.achievement[style*="background-color"]::after{
+	content:none;
+}
+
+@keyframes earned{
+	0%   { transform:scale(0.92); filter:brightness(1.35); }
+	55%  { transform:scale(1.04); }
+	100% { transform:none; filter:none; }
+}
+
+body[data-theme="pop"] .achievement:nth-of-type(5n+1){ --done-bg:#ff4f8b; }
+body[data-theme="pop"] .achievement:nth-of-type(5n+2){ --done-bg:#ffd23f; }
+body[data-theme="pop"] .achievement:nth-of-type(5n+3){ --done-bg:#29d3c4; }
+body[data-theme="pop"] .achievement:nth-of-type(5n+4){ --done-bg:#ff8a3d; }
+body[data-theme="pop"] .achievement:nth-of-type(5n+5){ --done-bg:#8be04e; }
+
+/* ---------- achievement toasts, positioned over the canvas by Toaster.setup() ---------- */
+
 #toast-area{
 	position:absolute;
 	display:flex;
@@ -39,17 +457,33 @@
 }
 
 .toast{
-	font-family:sans-serif;
-	text-align:center;
-	color:#ffffff;
-	background-color:rgba(20, 20, 30, 0.9);
-	border:2px solid gold;
-	border-radius:10px;
-	padding:0.8em 1.6em;
-	box-shadow:0 6px 20px rgba(0, 0, 0, 0.35);
+	display:grid;
+	grid-template-columns:auto 1fr;
+	grid-template-areas:"badge name" "badge title";
+	column-gap:16px;
+	align-items:center;
+	min-width:300px;
+	font-family:var(--font-body);
+	text-align:left;
+	color:var(--toast-ink);
+	background-color:var(--toast-bg);
+	border:var(--toast-border);
+	border-radius:var(--toast-radius);
+	padding:0.9em 1.7em 0.9em 1.2em;
+	box-shadow:var(--toast-shadow);
 	opacity:0;
 	transform:translateY(-30px) scale(0.9);
-	transition:opacity 0.35s ease, transform 0.35s ease;
+	transition:opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast::before{
+	content:"";
+	grid-area:badge;
+	width:42px;
+	height:42px;
+	background-color:var(--toast-accent);
+	-webkit-mask:var(--star) center / contain no-repeat;
+	mask:var(--star) center / contain no-repeat;
 }
 
 .toast.show{
@@ -57,26 +491,70 @@
 	transform:none;
 }
 
-.toast-title{
-	font-size:13px;
-	letter-spacing:0.1em;
-	text-transform:uppercase;
-	color:gold;
+/* the achievement name leads, the "unlocked" line supports it */
+.toast-name{
+	grid-area:name;
+	font-family:var(--font-display);
+	font-size:calc(var(--label-size) * 1.45);
+	font-weight:var(--display-weight);
+	line-height:1.15;
 }
 
-.toast-name{
-	font-size:24px;
-	font-weight:bold;
+.toast-title{
+	grid-area:title;
+	margin-top:0.2em;
+	font-size:calc(var(--label-size) * 0.8);
+	color:var(--toast-sub);
+}
+
+body[data-theme="pixel"] .toast-title{
+	font-size:9px;
+	margin-top:0.6em;
 }
 
 /* final "all achievements" toast */
 .toast.toast-final{
-	background-color:rgba(60, 45, 0, 0.92);
-	border-width:3px;
-	padding:1em 2em;
+	background-color:var(--toast-final-bg);
+	color:var(--toast-final-ink);
+	padding:1.1em 2.1em 1.1em 1.4em;
+}
+
+.toast.toast-final::before{
+	background-color:var(--toast-final-accent);
+	width:54px;
+	height:54px;
 }
 
 .toast.toast-final .toast-name{
-	color:gold;
-	font-size:28px;
+	font-size:calc(var(--label-size) * 1.7);
+}
+
+.toast.toast-final .toast-title{
+	color:var(--toast-final-sub);
+}
+
+/* ---------- smaller screens ---------- */
+
+@media (max-width:1400px){
+	#display{
+		flex-direction:column;
+		align-items:flex-start;
+	}
+	#achievement-area{
+		width:100%;
+		max-width:1000px;
+		display:grid;
+		grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+	}
+	#achievement-area h2,
+	#achievement-area .panel-hint{
+		grid-column:1 / -1;
+	}
+}
+
+@media (prefers-reduced-motion:reduce){
+	*, *::before, *::after{
+		animation:none !important;
+		transition:none !important;
+	}
 }
