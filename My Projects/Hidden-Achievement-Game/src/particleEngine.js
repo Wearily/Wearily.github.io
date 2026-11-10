@@ -32,6 +32,8 @@ class Particles{
 		this.isFirework = isFirework
 		this.gravity = 0
 		this.drag = 1
+		this.z = 0  // dust only: height above the terrain
+		this.dz = 0 // dust only: upward speed
 	}
 
 	update(){
@@ -52,10 +54,15 @@ class Particles{
 		this.g = Math.floor(this.g - this.colorDec);
 		this.b = Math.floor(this.b - this.colorDec)
 
+		this.dx *= this.drag;
+		this.dy *= this.drag;
+
 		if (this.isFirework) {
-			this.dx *= this.drag;
-			this.dy *= this.drag;
-			this.dy += this.gravity;
+			this.dy += this.gravity; // screen space, pulls down the screen
+		} else {
+			// dust gets kicked up off the ground and falls back onto it
+			this.z = Math.max(0, this.z + this.dz);
+			this.dz -= this.gravity;
 		}
 		
 		//movement physic
@@ -77,10 +84,31 @@ class Particles{
 
 class ParticleEngine {
 
+	// dust trail for each tile type, same keys as Terrain.biomes (0 grass, 1 sand, 2 water)
+	// size / lifespan are [min, max], spread is in degrees around the direction behind the player
+	static trails = {
+		0: { // grass: a few clippings flicked up that drop straight back down
+			amount: 3, speed: 2.5, spread: 50, size: [4, 7], lifespan: [14, 22],
+			drag: 0.9, lift: 2, gravity: 0.25,
+			colors: [[150, 225, 70], [190, 235, 110], [110, 180, 40]] // lighter than the grass so it shows up
+		},
+		1: { // sand: a wide, slow cloud that hangs in the air before settling
+			amount: 6, speed: 1.5, spread: 80, size: [8, 14], lifespan: [25, 40],
+			drag: 0.94, lift: 0.4, gravity: 0.01,
+			colors: [[225, 205, 155], [200, 180, 130], [240, 225, 180]]
+		},
+		2: { // water: droplets spray out to the sides and splash back in
+			amount: 5, speed: 3, spread: 140, size: [3, 6], lifespan: [18, 26],
+			drag: 0.96, lift: 3, gravity: 0.3,
+			colors: [[200, 240, 255], [150, 220, 245], [255, 255, 255]]
+		},
+	}
+
 	constructor(amount){
 		this.particles = [ ] // all particles data
 		this.active = [] // store all the active IDs ( the ids are just list indices)
 		this.inactive = [] //store the indices for inactive particles
+		this.lastTile = null // tile type from the last move event, to spot the player stepping onto new terrain
 
 		// create a "amount" amount of particles and store them into this.particles list, then set them to all be inactive
 		for (var i = 0; i < amount; i++) {
@@ -121,49 +149,65 @@ class ParticleEngine {
 		}
 
 		if (event.name == "move" && (event.moveX != 0 || event.moveY != 0)){
+			let trail = ParticleEngine.trails[event.tileInt]
+			if (!trail) {return}
+
 			// movement follows the camera now, so kick dust out behind the actual walking direction
 			// (createDust angles are in degrees with y flipped, 270 = straight down the screen)
 			let angle = Math.atan2(event.moveY, -event.moveX) * 180 / Math.PI
 			this.createDust(event.playerX - event.moveX * 20,
 							event.playerY - event.moveY * 20,
-							5, 2, angle, 5, 10)
+							angle, trail)
+
+			// stepping onto a different terrain throws up a ring of it all around the player
+			if (this.lastTile != null && this.lastTile != event.tileInt){
+				this.createDust(event.playerX, event.playerY, angle, trail, trail.amount * 5, 360)
+			}
+			this.lastTile = event.tileInt
 		}
 
 	}
 
-	createDust(x,y,amount,speed,angle,size,lifespan){
-		 // aquire 
+	createDust(x, y, angle, trail = ParticleEngine.trails[0], amount = trail.amount, spread = trail.spread){
+		 // aquire
 		 for (let i = 0; i < amount ; i ++){
 			 if (this.inactive.length === 0) {break}
 
 			 let id = this.activate() // return a particle id that is from the inactive list, and add to the active
-			
+
 			//change the info on the particle
-			 let xoffset = randomInt (-10, 10) 
-			 let yoffset = randomInt (-5, 5) 
-			 
+			 let xoffset = randomInt (-10, 10)
+			 let yoffset = randomInt (-5, 5)
+
 			 let part = this.particles[id]
-	
-			 part.lifetime = lifespan
-			 part.maxtime = lifespan;
+
+			 part.lifetime = randomInt(trail.lifespan[0], trail.lifespan[1])
+			 part.maxtime = part.lifetime;
 			 part.x = x + xoffset
 			 part.y = y + yoffset
 
-			 // set speed and direction
-			 part.speed = speed
-			 part.dx = part.speed * Math.cos(angle*(Math.PI / 180))
-			 part.dy = part.speed * Math.sin(angle*(Math.PI / 180)) * -1
+			 // set speed and direction, fanned out by the trail's spread
+			 let partAngle = angle + (Math.random() - 0.5) * spread
+			 part.speed = trail.speed * (0.5 + Math.random())
+			 part.dx = part.speed * Math.cos(partAngle*(Math.PI / 180))
+			 part.dy = part.speed * Math.sin(partAngle*(Math.PI / 180)) * -1
 
+			 // throw it up off the ground, gravity brings it back down
+			 part.z = 0
+			 part.dz = trail.lift * (0.5 + Math.random())
+			 part.gravity = trail.gravity
+			 part.drag = trail.drag
 
-			 part.radius = size
+			 part.radius = randomInt(trail.size[0], trail.size[1])
 			 part.radiusDec = part.radius/ part.lifetime;
 
 			 part.isFirework = false; // set to false
 			 part.colorDec = 0.5
-			 
-			 part.r = randomInt(200,255)
-			 part.g = randomInt(200,255)
-			 part.b = randomInt(200,255)
+
+			 let base = trail.colors[randomInt(0, trail.colors.length - 1)]
+			 part.r = Math.min(255, base[0] + randomInt(-15,15))
+			 part.g = Math.min(255, base[1] + randomInt(-15,15))
+			 part.b = Math.min(255, base[2] + randomInt(-15,15))
 		 }
 	}
 
