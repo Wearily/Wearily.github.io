@@ -95,7 +95,7 @@ function draw() {
 		let part = particleEngine.particles[id]
 		if (part.lifetime > 0 && !part.isFirework){
 			push()
-			translate(0, 0, terrain.heightAt(part.x, part.y) + 2)
+			translate(0, 0, terrain.heightAt(part.x, part.y) + 2 + part.z)
 			part.render()
 			pop()
 			part.update()
