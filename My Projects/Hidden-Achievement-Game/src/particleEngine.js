@@ -84,7 +84,7 @@ class Particles{
 
 class ParticleEngine {
 
-	// dust trail for each tile type, same keys as Terrain.biomes (0 grass, 1 sand, 2 water)
+	// dust trail for each tile type, same keys as Terrain.biomes (0 grass, 1 sand, 2 water, 3 forest, 4 mountain, 5 snow, 6 stone)
 	// size / lifespan are [min, max], spread is in degrees around the direction behind the player
 	static trails = {
 		0: { // grass: a few clippings flicked up that drop straight back down
@@ -101,6 +101,26 @@ class ParticleEngine {
 			amount: 5, speed: 3, spread: 140, size: [3, 6], lifespan: [18, 26],
 			drag: 0.96, lift: 3, gravity: 0.3,
 			colors: [[200, 240, 255], [150, 220, 245], [255, 255, 255]]
+		},
+		3: { // forest: dry leaves kicked up that flutter down slowly
+			amount: 3, speed: 2, spread: 70, size: [4, 7], lifespan: [20, 32],
+			drag: 0.92, lift: 2, gravity: 0.12,
+			colors: [[200, 140, 50], [170, 110, 40], [120, 160, 60]]
+		},
+		4: { // mountain: small pebbles that skitter off and drop fast
+			amount: 4, speed: 3, spread: 90, size: [3, 5], lifespan: [12, 20],
+			drag: 0.9, lift: 2.5, gravity: 0.4,
+			colors: [[170, 166, 160], [130, 126, 122], [200, 196, 190]]
+		},
+		5: { // snow: soft white puffs that hang in the air
+			amount: 6, speed: 1.2, spread: 90, size: [7, 12], lifespan: [28, 42],
+			drag: 0.95, lift: 0.8, gravity: 0.02,
+			colors: [[255, 255, 255], [225, 238, 250], [200, 220, 240]]
+		},
+		6: { // stone: a little grey grit that puffs out and settles quickly
+			amount: 3, speed: 1.8, spread: 70, size: [4, 8], lifespan: [14, 22],
+			drag: 0.92, lift: 0.8, gravity: 0.1,
+			colors: [[190, 186, 176], [160, 156, 148], [215, 210, 200]]
 		},
 	}
 

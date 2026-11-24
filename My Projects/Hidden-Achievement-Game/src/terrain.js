@@ -13,6 +13,10 @@ class Terrain {
 		0: { base: 30, rough: 50, color: [0, 200, 0] },     // grass
 		1: { base: 8,  rough: 6,  color: [194, 178, 128] }, // sand
 		2: { base: 0,  rough: 0,  color: [9, 195, 219] },   // water
+		3: { base: 38, rough: 30, color: [28, 120, 52] },   // forest
+		4: { base: 115, rough: 70, color: [128, 124, 120], variation: 0.25 }, // mountain
+		5: { base: 220, rough: 30, color: [240, 245, 250], variation: 0.06 }, // snow
+		6: { base: 34, rough: 4, color: [172, 166, 154], variation: 0.08 },   // stone, flat and smooth
 	}
 
 	static waterVariation = 0.05
@@ -45,10 +49,11 @@ class Terrain {
 				let y = j * this.cellSize
 
 				let biome = this.biomeAt(x, y)
-				let z = biome.base + biome.rough * (noise(x * 0.008, y * 0.008) - 0.5) * 2
+				// noise is measured from the original island's corner so its hills stay as they were
+				let z = biome.base + biome.rough * (noise(x * 0.008, (y - UI.islandOffset[1] * UI.tileHeight) * 0.008) - 0.5) * 2
 
-				// raise a mountain towards the middle of the island, fading out at the beaches
-				let d = dist(x, y, UI.worldWidth / 2, UI.worldHeight / 2) / (UI.worldWidth / 2)
+				// raise a mountain towards the middle of the original island, fading out at the beaches
+				let d = dist(x, y, UI.islandCenter[0], UI.islandCenter[1]) / (UI.islandSize * UI.tileWidth / 2)
 				z += this.mountain * Math.pow(max(0, 1 - d / 0.6), 2) * (biome.rough / Terrain.biomes[0].rough)
 
 				if (this.touchesWater(i, j)) {
@@ -97,7 +102,7 @@ class Terrain {
 		let type = this.tileTypeAt((a.x + b.x + c.x) / 3, (a.y + b.y + c.y) / 3)
 		let base = color(...Terrain.biomes[type].color)
 		// water gets less variation so it blends into the ocean plane at the world edge
-		let variation = (type == 2) ? Terrain.waterVariation : 0.12
+		let variation = (type == 2) ? Terrain.waterVariation : (Terrain.biomes[type].variation ?? 0.12)
 		fill(lerpColor(base, color(0), random(0, variation)))
 
 		vertex(a.x, a.y, a.z)

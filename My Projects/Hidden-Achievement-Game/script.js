@@ -50,7 +50,7 @@ function setup() {
 
 	UI.generateIsland()
 	terrain.generate()
-	player.spawn(UI.worldWidth / 2, UI.worldHeight * 0.7) // south side of the island
+	player.spawn(UI.islandCenter[0], UI.islandCenter[1] + 400) // south side of the island
 	birdCam.setup(player.x, player.y, terrain.heightAt(player.x, player.y))
 	toaster.setup()
 

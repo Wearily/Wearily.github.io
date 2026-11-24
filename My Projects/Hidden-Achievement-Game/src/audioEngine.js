@@ -5,6 +5,10 @@ class MyAudioEngine {
 		this.soundEffects["grass"] = loadSound('assets/sounds/grass.wav');
 		this.soundEffects["sand"] = loadSound('assets/sounds/sand.wav');
 		this.soundEffects["water"] = loadSound('assets/sounds/water.wav');
+		this.soundEffects["forest"] = loadSound('assets/sounds/forest.wav');
+		this.soundEffects["mountain"] = loadSound('assets/sounds/gravel.wav');
+		this.soundEffects["snow"] = loadSound('assets/sounds/snow.wav');
+		this.soundEffects["stone"] = loadSound('assets/sounds/concrete.wav');
 	}
 
 	
