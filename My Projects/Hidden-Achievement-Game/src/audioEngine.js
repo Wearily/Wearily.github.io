@@ -5,8 +5,9 @@
  * so every surface has a natural walking rhythm.
  *
  * Two sound sets, picked with MyAudioEngine.soundSet:
- *   - "experimental": synthesized steps in assets/sounds/experimental (made by tools/generate_footsteps.py),
- *                     5 variations per surface, each one a whole footstep with its body baked in
+ *   - "experimental": whole footsteps in assets/sounds/experimental, several variations per surface:
+ *                     grass is built from a recording (tools/vary_grass_sample.py),
+ *                     sand and water are synthesized (tools/generate_footsteps.py)
  *   - "original"    : the recordings in assets/sounds, sliced into steps and layered with:
  *       thump : a short low sine drop, the weight of the heel landing (land only)
  *       plop  : a falling sine, the foot breaking the water surface (water only)
@@ -39,8 +40,8 @@ class MyAudioEngine {
 	// level is relative to the file after it has been normalised to a common peak
 	static soundSets = {
 		experimental: {
-			0: { // grass: heel + toe roll, a rustle of blades
-				samples: soundVariants("experimental/grass", 5), level: 0.8, stride: 80, slice: null,
+			0: { // grass: crunch + toe snap, 4 versions built from a recording (tools/vary_grass_sample.py)
+				samples: soundVariants("experimental/grass", 4), level: 0.8, stride: 80, slice: null,
 				rate: [0.93, 1.07], tone: 9000
 			},
 			1: { // sand: shorter strides that sink in, a swelling crunch
