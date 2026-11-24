@@ -4,15 +4,11 @@
  * Steps are timed by distance walked (one footfall per stride), not by how long a sample is,
  * so every surface has a natural walking rhythm.
  *
- * Two sound sets, picked with MyAudioEngine.soundSet:
- *   - "experimental": whole footsteps in assets/sounds/experimental, several variations per surface:
- *                     grass is built from a recording (tools/vary_grass_sample.py),
- *                     sand and water are synthesized (tools/generate_footsteps.py)
- *   - "original"    : the recordings in assets/sounds, sliced into steps and layered with:
- *       thump : a short low sine drop, the weight of the heel landing (land only)
- *       plop  : a falling sine, the foot breaking the water surface (water only)
- *       noise : filtered noise, the brush / crunch / slosh texture
- * Every step picks a different file / slice than the last one and gets random pitch, level and filter,
+ * Each surface has several versions of a whole footstep in assets/sounds (grass_1.wav, sand_1.wav, ...):
+ *   - grass and water are built from recordings (tools/vary_grass_sample.py, tools/vary_water_sample.py)
+ *   - sand is synthesized (tools/generate_footsteps.py)
+ * The tools write to assets/sounds/experimental; copy files up to assets/sounds once they sound right.
+ * Every step picks a different file than the last one and gets random pitch, level and filter,
  * so no two steps sound the same.
  *
  * Extra moments:
@@ -26,54 +22,27 @@
  */
 
 function soundVariants(base, count){
-	// "experimental/grass", 3 -> ["experimental/grass_1", "experimental/grass_2", "experimental/grass_3"]
+	// "grass", 3 -> ["grass_1", "grass_2", "grass_3"]
 	return Array.from({ length: count }, (_, i) => base + "_" + (i + 1))
 }
 
 class MyAudioEngine {
 
-	static soundSet = "experimental" // "experimental" or "original", see the top of the file
-
-	// one table per sound set, one entry per tile type (same keys as Terrain.biomes / ParticleEngine.trails)
+	// one entry per tile type (same keys as Terrain.biomes / ParticleEngine.trails)
 	// samples: file names under assets/sounds (no .wav), a different one is picked each step
-	// slice: seconds to play from a transient inside the file, null plays the whole file
 	// level is relative to the file after it has been normalised to a common peak
-	static soundSets = {
-		experimental: {
-			0: { // grass: crunch + toe snap, 4 versions built from a recording (tools/vary_grass_sample.py)
-				samples: soundVariants("experimental/grass", 4), level: 0.8, stride: 80, slice: null,
-				rate: [0.93, 1.07], tone: 9000
-			},
-			1: { // sand: shorter strides that sink in, a swelling crunch
-				samples: soundVariants("experimental/sand", 5), level: 0.85, stride: 72, slice: null,
-				rate: [0.9, 1.06], tone: 8000
-			},
-			2: { // water: long wading strides, splash + plunge + bubbles
-				samples: soundVariants("experimental/water", 5), level: 0.7, stride: 105, slice: null,
-				rate: [0.88, 1.04], tone: 10000
-			}
+	// rate: random playback speed range (pitch), tone: lowpass cutoff in Hz
+	static surfaces = {
+		0: { // grass: crunch + toe snap, 4 versions built from a recording
+			samples: soundVariants("grass", 4), level: 0.8, stride: 80, rate: [0.93, 1.07], tone: 9000
 		},
-		original: {
-			0: { // grass: soft heel on turf, a brush of blades
-				samples: ["grass"], level: 0.8, stride: 80, slice: 0.16, rate: [0.9, 1.1], tone: 7000,
-				thump: { freq: 85, level: 0.35, decay: 0.07 },
-				noise: { type: "bandpass", freq: 4500, q: 0.7, level: 0.07, decay: 0.09 }
-			},
-			1: { // sand: shorter strides that sink in, a dry crunch
-				samples: ["sand"], level: 0.85, stride: 72, slice: 0.22, rate: [0.85, 1.05], tone: 5000,
-				thump: { freq: 65, level: 0.25, decay: 0.09 },
-				noise: { type: "bandpass", freq: 1800, q: 1.2, level: 0.09, decay: 0.16 }
-			},
-			2: { // water: long wading strides, a splash with a low plop under it
-				samples: ["water"], level: 0.7, stride: 105, slice: 0.3, rate: [0.8, 1.0], tone: 9000,
-				plop: { from: 380, to: 110, level: 0.25, decay: 0.12 },
-				noise: { type: "lowpass", freq: 2500, q: 0.5, level: 0.06, decay: 0.2 }
-			}
+		1: { // sand: shorter strides that sink in, a swelling crunch
+			samples: soundVariants("sand", 5), level: 0.85, stride: 72, rate: [0.9, 1.06], tone: 8000
+		},
+		2: { // water: long wading strides, 4 versions built from a recording
+			// the versions already span shallow (higher) to deep (lower), so the random pitch range is narrow
+			samples: soundVariants("water", 4), level: 0.7, stride: 105, rate: [0.95, 1.05], tone: 10000
 		}
-	}
-
-	static get surfaces(){
-		return MyAudioEngine.soundSets[MyAudioEngine.soundSet]
 	}
 
 	static busLevel = 0.6    // footsteps sit just under everything else (player SFX, not voice)
@@ -87,7 +56,6 @@ class MyAudioEngine {
 		this.analysis = {}   // { norm, onsets } per sample name, filled once the file has loaded
 		this.ctx = null
 		this.bus = null
-		this.noiseBuffer = null
 		this.voices = 0
 
 		// walking state
@@ -104,7 +72,7 @@ class MyAudioEngine {
 	}
 
 	loadSoundFiles(){
-		// called from preload(), only the active sound set is loaded
+		// called from preload()
 		for (let id in MyAudioEngine.surfaces){
 			for (let name of MyAudioEngine.surfaces[id].samples){
 				this.files[name] = loadSound('assets/sounds/' + name + '.wav', (file) => {
@@ -117,7 +85,7 @@ class MyAudioEngine {
 	static analyse(buffer){
 		/***
 		 * finds the peak level (to even out loudness between files)
-		 * and where each footstep transient starts (so a long file gives several different steps)
+		 * and where each transient starts (the post-water drips play short slices from these)
 		 *
 		 * return: { norm: gain that brings the peak to 1, onsets: [seconds] }
 		 */
@@ -163,12 +131,6 @@ class MyAudioEngine {
 		this.bus = this.ctx.createGain()
 		this.bus.gain.value = MyAudioEngine.busLevel
 		this.bus.connect(p5.soundOut.input)
-
-		// half a second of white noise, every noise layer reads a random part of it
-		let length = Math.floor(this.ctx.sampleRate * 0.5)
-		this.noiseBuffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate)
-		let data = this.noiseBuffer.getChannelData(0)
-		for (let i = 0; i < length; i++) {data[i] = Math.random() * 2 - 1}
 		return true
 	}
 
@@ -257,10 +219,7 @@ class MyAudioEngine {
 		let rate = MyAudioEngine.rand(...s.rate) * footPitch * pitch
 		let level = accent * MyAudioEngine.rand(0.8, 1)
 
-		this.playSample(s.samples, s.slice, rate, s.level * level, s.tone * MyAudioEngine.rand(0.8, 1.1), pan, when)
-		if (s.thump) {this.playTone(s.thump.freq * 1.6, s.thump.freq, s.thump.level * level, s.thump.decay, pan, when)}
-		if (s.plop) {this.playTone(s.plop.from * rate, s.plop.to, s.plop.level * level, s.plop.decay * accent, pan, when + 0.015)}
-		if (s.noise) {this.playNoise(s.noise, s.noise.level * level, pan, when)}
+		this.playSample(s.samples, null, rate, s.level * level, s.tone * MyAudioEngine.rand(0.8, 1.1), pan, when)
 
 		// dripping after walking out of water, fading over the next few steps
 		if (this.wet > 0 && tileInt != 2){
@@ -338,53 +297,6 @@ class MyAudioEngine {
 
 		src.start(when, offset)
 		src.stop(when + duration + 0.01)
-	}
-
-	playTone(from, to, level, decay, pan, when){
-		// a sine that drops in pitch: the body of the step
-		if (this.voices >= MyAudioEngine.maxVoices) {return}
-
-		let osc = this.ctx.createOscillator()
-		osc.type = "sine"
-		osc.frequency.setValueAtTime(from, when)
-		osc.frequency.exponentialRampToValueAtTime(to, when + decay)
-
-		let amp = this.ctx.createGain()
-		amp.gain.setValueAtTime(0, when)
-		amp.gain.linearRampToValueAtTime(level, when + 0.005)
-		amp.gain.exponentialRampToValueAtTime(0.0001, when + decay)
-
-		osc.connect(amp)
-		this.voice(amp, when + decay).pan.value = pan
-
-		osc.start(when)
-		osc.stop(when + decay + 0.01)
-	}
-
-	playNoise(spec, level, pan, when){
-		// filtered noise burst: brush of grass, crunch of sand, slosh of water
-		if (this.voices >= MyAudioEngine.maxVoices) {return}
-
-		let decay = spec.decay * MyAudioEngine.rand(0.8, 1.2)
-		let src = this.ctx.createBufferSource()
-		src.buffer = this.noiseBuffer
-
-		let filter = this.ctx.createBiquadFilter()
-		filter.type = spec.type
-		filter.frequency.value = spec.freq * MyAudioEngine.rand(0.85, 1.15)
-		filter.Q.value = spec.q
-
-		let amp = this.ctx.createGain()
-		amp.gain.setValueAtTime(0, when)
-		amp.gain.linearRampToValueAtTime(level, when + 0.003)
-		amp.gain.exponentialRampToValueAtTime(0.0001, when + decay)
-
-		src.connect(filter)
-		filter.connect(amp)
-		this.voice(amp, when + decay).pan.value = pan
-
-		src.start(when, Math.random() * (this.noiseBuffer.duration - decay))
-		src.stop(when + decay + 0.01)
 	}
 
 	static pick(list){
